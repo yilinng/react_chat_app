@@ -1,59 +1,45 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import ChatBody from './ChatBody';
 import User from './User'
 
 
 const ChatPage = ({ socket }) => {
-  //const [messages, setMessages] = useState([]);
-  //const [typingStatus, setTypingStatus] = useState('');
-  const lastMessageRef = useRef(null);
+
   const [selectedUser, setSelectedUser] = useState(null)
   const [users, setUsers] = useState([])
-  
+  const [certainUser, setCertainUser] = useState([])
+
+
   const onMessage = (content) => {
 
-     if (selectedUser) {
+    if(selectedUser === null) return
+
       socket.emit("private message", {
         content,
         to: selectedUser.userID,
       });
-       
-     
-       setSelectedUser(preState => ({
+      
+      setSelectedUser(preState => ({
          ...preState,
          messages: [
-           ...selectedUser.messages, 
+           ...preState?.messages, 
           { content, fromSelf: true }
          ]
       }))
-      
-    }
+
+    setCertainUser([selectedUser]);
+  
   }
 
-  useEffect(() => {
-    socket.on("connect", () => {
-      users.forEach((user) => {
-        if (user.self) {
-          user.connected = true;
-        }
-      });
-    });
-
-  }, [socket, users])
-
-    useEffect(() => {
-
-    socket.on("disconnect", () => {
-      users.forEach((user) => {
-        if (user.self) {
-          user.connected = false;
-        }
-      });
-    });
-
-  }, [socket, users])
-
+  console.log('certainUser', certainUser)
   
+  useEffect(() => {
+    if (users.length > 0 && selectedUser !== null) {
+      setCertainUser([selectedUser]);
+    }
+  }, [users, selectedUser])
+
+/*
   useEffect(() => {
     const getData = () => {
       fetch('https://api.thecatapi.com/v1/images/search?limit=1&page=10&order=Desc')
@@ -62,20 +48,21 @@ const ChatPage = ({ socket }) => {
     }
     //getData()
   }, [])
-
+*/
   const initReactiveProperties = (user) => {
     user.hasNewMessages = false;
   };
 
   useEffect(() => {
-    socket.on("users", (users) => {
+
+    const listen = (users) => {
       users.forEach((user) => {
         user.messages.forEach((message) => {
-        message.fromSelf = message.from === socket.userID;
-      });
-      for (let i = 0; i < users.length; i++) {
-        const existingUser = users[i];
-        if (existingUser.userID === user.userID) {
+          message.fromSelf = message.from === socket.userID;
+        });
+        for (let i = 0; i < users.length; i++) {
+          const existingUser = users[i];
+          if (existingUser.userID === user.userID) {
             existingUser.connected = user.connected;
             return;
           }
@@ -83,8 +70,9 @@ const ChatPage = ({ socket }) => {
         user.self = user.userID === socket.userID;
         initReactiveProperties(user);
         setUsers([...users, user])
-    });
-    // put the current user first, and then sort by username
+      });
+      
+      // put the current user first, and then sort by username
       const sortUsers = users.sort((a, b) => {
         if (a.self) return -1;
         if (b.self) return 1;
@@ -92,11 +80,17 @@ const ChatPage = ({ socket }) => {
         return a.username > b.username ? 1 : 0;
       });
       setUsers(sortUsers)
-    });
-  }, [socket])
+    };
+    socket.on("users", listen);
+
+    return () => socket.off("users", listen)
+
+  
+  }, [socket, users])
 
   useEffect(() => {
-    socket.on("user connected", (user) => {
+
+    const listen = (user) => {
       for (let i = 0; i < users.length; i++) {
         const existingUser = users[i];
         if (existingUser.userID === user.userID) {
@@ -106,49 +100,92 @@ const ChatPage = ({ socket }) => {
       }
       initReactiveProperties(user);
       setUsers([...users, user])
-    });
+    };
+    socket.on("user connected", listen);
+
+    return() => socket.off("user connected", listen)
+
   }, [socket, users])
 
   useEffect(() => {
-        socket.on("user disconnected", (id) => {
-          for (let i = 0; i < users.length; i++) {
-            const user = users[i];
-            if (user.userID === id) {
+
+    const listen = (id) => {
+      const allUsers = [...users];
+      for (let i = 0; i < users.length; i++) {
+          const user = users[i];
+          if (user.userID === id) {
               user.connected = false;
+              allUsers[i] = user;
+              setUsers([...allUsers]);
               break;
             }
           }
-        });
-  }, [socket, users])
+    }
+
+    socket.on("user disconnected", listen);
+    
+    return () => {
+      socket.off('user disconnected', listen)
+    }
+    
+  }, [users, socket])
+
 
   useEffect(() => {
-    socket.on("private message", ({ content, from, to }) => {
+    
+    const listen = ({ content, from, to }) => {
+
       const fromSelf = socket.userID === from;
       const newUsers = [...users];
 
       for (let i = 0; i < users.length; i++) {
-        const user = users[i];
+        let user = users[i];
+        // user socket === true -> to 
         if (user.userID === (fromSelf ? to : from)) {
+        
+          console.log('private message work.....');
+          /*
           user.messages.push({
             content,
-            fromSelf
+            fromSelf,
           });
+          
+          selectedUser have to sync user, when have a selecteduser, 
+          first message run twice, other run normal.
+          no pick any selectedUser will run normal.
+      
+          if (selectedUser?.messages[0]) {
+            continue;
+          }
+          */
+          selectedUser?.messages.push({
+            content,
+            fromSelf,
+          })
+
+          user = selectedUser
+        
           newUsers[i] = user;
-          setUsers(newUsers)
-          if (user !== selectedUser) {
+          setUsers(newUsers);
+        
+          if (user.userID !== selectedUser.userID) {
             user.hasNewMessages = true;
             newUsers[i] = user;
-            setUsers(newUsers)
+            setUsers(newUsers);
           }
           break;
         }
       }
-    
-    });
-    
-     
-  }, [socket, users, selectedUser])
- 
+    };
+   
+    socket.on("private message", listen);
+
+    return () => {
+      socket.off("private message", listen)
+    }
+  
+  }, [selectedUser, socket, users])
+
 
 /*
    useEffect(() => {
@@ -196,7 +233,7 @@ const ChatPage = ({ socket }) => {
         </div>
     
         
-        { users.length ? users.map((user, index) =>
+        {users.length ? users.map((user, index) =>
           <User
             user={user}
             users={users}
@@ -204,17 +241,18 @@ const ChatPage = ({ socket }) => {
             setSelectedUser={setSelectedUser}
             setUsers={setUsers}
             index={index}
+            selectedUser={selectedUser}
           />
         )
           :<div>not user can see</div>
         }
       </div>
       <div className="chat__main">
-        { selectedUser &&
+ 
+        { certainUser.length > 0 &&
           <ChatBody
-          lastMessageRef={lastMessageRef}
-          socket={socket}
-          user={selectedUser}
+          selectedUser={selectedUser}
+          certainUser={certainUser}
           onMessage={onMessage}
           />
         }

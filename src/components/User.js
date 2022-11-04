@@ -1,32 +1,54 @@
 import React, { useState, useEffect } from "react";
 
-const User = ({ user, users, setSelectedUser, setUsers, index }) => {
+const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser}) => {
 
   const [message, setMessage] = useState(null)
+  const [selected, setSelected] = useState(false)
+  const [time, setTime] = useState(null)
 
   const handleClick = () => {
     const newUsers = [...users];
-    setSelectedUser(user);
-    user.hasNewMessages = false;
-    newUsers[index] = user;
-    setUsers(newUsers);
+    setSelectedUser({ ...user, hasNewMessages: false });
+    const foundUser = newUsers[index];
+    foundUser.hasNewMessages = false;
+    newUsers[index] = foundUser;
+    setUsers([...newUsers]);
+    setTime(new Date().toLocaleTimeString().replace(',', ''));
     
+    //list user who have same userId have to update!! 
+    const userList = [...users];
+    const findIndexFromUserList = userList.findIndex(element => element.userID === selectedUser?.userID);
+    userList[findIndexFromUserList] = selectedUser;
+    setUsers([...userList]);
   }
 
-  const messageSlice = () => {
-   return message?.length > 30 ? message.substring(0, 30) + '...': message
+  const messageSlice = (msg) => {
+    return msg?.length > 30 ? msg.substring(0, 30) + '...': msg
   }
 
   useEffect(() => {
-    //console.log(user.messages, 'user message....');
-    if (user.messages.length > 0) {
+    if (user.messages.length > 0) {   
       setMessage(user.messages[user.messages.length -1].content)
     }
-  }, [user.messages.length, user])
+  }, [user.messages.length, user.messages])
+
+  useEffect(() => {
+    if (selectedUser === null) return
+    setSelected(selectedUser?.userID === user?.userID)
+
+  }, [user, selectedUser, setSelected])
+
+  useEffect(() => {
+    if (selected) {
+      console.log('selected!!, have same selectedUser', selectedUser);
+      console.log('selected!!, have same user', user);
+      
+    }
+  }, [selected, selectedUser, user])
 
 
   return (
-    <div className="user" onClick={handleClick}>
+    <div className={`user ${selected ? 'selected' : ''}`} onClick={handleClick}>
       <div className='image'>
           <img src={user.url} alt="Avatar" className='avatar'/>
       </div>
@@ -47,12 +69,12 @@ const User = ({ user, users, setSelectedUser, setUsers, index }) => {
               </div>
               }    
 
-            <h5>{ new Date().toLocaleTimeString().replace(',','') }</h5>
+            <h5>{ time }</h5>
           </div>
 
         </div>
 
-        <span>{ messageSlice() }</span>
+        <span>{ messageSlice(message) }</span>
 
       </div>
         

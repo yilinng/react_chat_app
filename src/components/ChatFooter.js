@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 //import checkPageStatus from "../utils/functions"
 
-const ChatFooter = ({ socket, onMessage }) => {
+const ChatFooter = ({ onMessage }) => {
   const [message, setMessage] = useState('');
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    socket.emit('input', message)
+    //socket.emit('input', message)
     onMessage(message)
     setMessage('');
   };

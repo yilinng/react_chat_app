@@ -208,6 +208,10 @@
   margin: 10px auto;
 }
 
+.chatList .selected{
+  background-color:#ccc;
+}
+
 .chatList .user .image {
   margin-right: 20px;
 }
