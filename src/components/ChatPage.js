@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ChatBody from './ChatBody';
 import User from './User'
 
@@ -8,33 +8,44 @@ const ChatPage = ({ socket }) => {
   const [selectedUser, setSelectedUser] = useState(null)
   const [users, setUsers] = useState([])
   const [certainUser, setCertainUser] = useState([])
+  const clickUser = useRef(null);
 
+  //check object is empty
+  function isEmpty(obj) { 
+    for (let x in obj) {
+      if (obj.hasOwnProperty(x)) return false
+    }
+   return true;
+  }
 
   const onMessage = (content) => {
 
-    if(selectedUser === null) return
+    if(isEmpty(selectedUser)) return
 
       socket.emit("private message", {
         content,
         to: selectedUser.userID,
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
       });
       
       setSelectedUser(preState => ({
          ...preState,
          messages: [
            ...preState?.messages, 
-          { content, fromSelf: true }
-         ]
+           {
+             content,
+             fromSelf: true,
+             time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+           }
+        ],
       }))
 
-    setCertainUser([selectedUser]);
-  
   }
 
-  console.log('certainUser', certainUser)
-  
+  //console.log('certainUser', certainUser)
+
   useEffect(() => {
-    if (users.length > 0 && selectedUser !== null) {
+    if (users.length > 0 && !isEmpty(selectedUser)) {
       setCertainUser([selectedUser]);
     }
   }, [users, selectedUser])
@@ -130,48 +141,47 @@ const ChatPage = ({ socket }) => {
     
   }, [users, socket])
 
-
   useEffect(() => {
     
-    const listen = ({ content, from, to }) => {
-
-      const fromSelf = socket.userID === from;
-      const newUsers = [...users];
+    const listen = ({ content, from, to, time }) => {
 
       for (let i = 0; i < users.length; i++) {
-        let user = users[i];
+
+        const fromSelf = socket.userID === from;
+        const newUsers = [...users];
+        const user = users[i];
         // user socket === true -> to 
         if (user.userID === (fromSelf ? to : from)) {
-        
-          console.log('private message work.....');
-          /*
+      
           user.messages.push({
             content,
+            from,
+            to,
             fromSelf,
+            time
           });
-          
-          selectedUser have to sync user, when have a selecteduser, 
-          first message run twice, other run normal.
-          no pick any selectedUser will run normal.
-      
-          if (selectedUser?.messages[0]) {
-            continue;
-          }
-          */
-          selectedUser?.messages.push({
-            content,
-            fromSelf,
-          })
-
-          user = selectedUser
-        
+       
           newUsers[i] = user;
           setUsers(newUsers);
-        
-          if (user.userID !== selectedUser.userID) {
-            user.hasNewMessages = true;
-            newUsers[i] = user;
-            setUsers(newUsers);
+          
+          if (user.userID === selectedUser.userID) {
+            //find selectUser messages which is same as selectedUser
+          
+              setSelectedUser(preState => ({
+                ...preState,
+                messages: [
+                  ...preState?.messages, 
+                  {
+                    content,
+                    fromSelf,
+                    time
+                  }
+                ],
+              }))
+          } else {
+              user.hasNewMessages = true;
+              newUsers[i] = user;
+              setUsers(newUsers);
           }
           break;
         }
@@ -186,6 +196,13 @@ const ChatPage = ({ socket }) => {
   
   }, [selectedUser, socket, users])
 
+   useEffect(() => {
+     // 👇️ scroll to bottom when click user
+     if (certainUser.length) {
+       clickUser.current?.scrollIntoView({ behavior: 'smooth' });
+       clickUser.current?.focus();
+     }
+   }, [certainUser]);
 
 /*
    useEffect(() => {
@@ -237,7 +254,7 @@ const ChatPage = ({ socket }) => {
           <User
             user={user}
             users={users}
-            key={user.userID}
+            key={user?.userID}
             setSelectedUser={setSelectedUser}
             setUsers={setUsers}
             index={index}
@@ -250,10 +267,10 @@ const ChatPage = ({ socket }) => {
       <div className="chat__main">
  
         { certainUser.length > 0 &&
-          <ChatBody
-          selectedUser={selectedUser}
+          <ChatBody          
           certainUser={certainUser}
           onMessage={onMessage}
+          clickUser={clickUser}
           />
         }
       </div>

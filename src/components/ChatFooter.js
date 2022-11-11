@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 //import checkPageStatus from "../utils/functions"
 
-const ChatFooter = ({ onMessage }) => {
+const ChatFooter = ({ onMessage, clickUser }) => {
   const [message, setMessage] = useState('');
 
   const handleSendMessage = (e) => {
@@ -24,6 +24,7 @@ const ChatFooter = ({ onMessage }) => {
           className="message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          ref={clickUser}
         />
         <button className="sendBtn" disabled={!isVaild}>SEND</button>
       </form>

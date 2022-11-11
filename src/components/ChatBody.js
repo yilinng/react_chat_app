@@ -1,7 +1,7 @@
 import ChatFooter from './ChatFooter';
 import React, { useState, useEffect } from "react";
 
-const ChatBody = ({ certainUser, onMessage }) => {
+const ChatBody = ({ certainUser, onMessage, clickUser}) => {
   
   const [catchMsg, setCatchMsg] = useState([])
 
@@ -38,25 +38,29 @@ const ChatBody = ({ certainUser, onMessage }) => {
         {
           catchMsg.map((message, index) =>
             message.fromSelf ? (
-            <div className="message__chats" key={index}>
+            <div className="message__chats sender" key={index}>
               <p className="sender__name">You</p>
               <div className="message__sender">
                   <p>{message.content} </p>
-              </div>
+                </div>
+               <p className="message__time">{ message.time } </p>
+
             </div>
           ) : (
-            <div className="message__chats" key={index}>
-              <p>{certainUser[0]?.username}</p>
+            <div className="message__chats recipient" key={index}>
+              <p>{ certainUser[0]?.username }</p>
               <div className="message__recipient">
-                  <p>{message.content} </p>
-              </div>
+                    <p>{message.content} </p>
+                  </div>
+                <p className="message__time">{ message.time } </p>
+
         </div>  
           )
         )
       }
       </div>
 
-      <ChatFooter onMessage={onMessage} />
+      <ChatFooter onMessage={onMessage} clickUser={clickUser} />
     </>
   );
 };

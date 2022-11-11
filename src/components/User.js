@@ -13,7 +13,6 @@ const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser}) =>
     foundUser.hasNewMessages = false;
     newUsers[index] = foundUser;
     setUsers([...newUsers]);
-    setTime(new Date().toLocaleTimeString().replace(',', ''));
     
     //list user who have same userId have to update!! 
     const userList = [...users];
@@ -22,29 +21,31 @@ const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser}) =>
     setUsers([...userList]);
   }
 
+
   const messageSlice = (msg) => {
     return msg?.length > 30 ? msg.substring(0, 30) + '...': msg
   }
 
   useEffect(() => {
-    if (user.messages.length > 0) {   
-      setMessage(user.messages[user.messages.length -1].content)
+    if (user.userID && user.messages.length > 0) {   
+      setMessage(user.messages[user.messages.length - 1].content)
+      setTime(user.messages[user.messages.length - 1].time);
     }
-  }, [user.messages.length, user.messages])
+  }, [user.messages.length, user.messages, user.userID])
 
   useEffect(() => {
-    if (selectedUser === null) return
+    if (!selectedUser) return
     setSelected(selectedUser?.userID === user?.userID)
-
   }, [user, selectedUser, setSelected])
 
+
   useEffect(() => {
-    if (selected) {
-      console.log('selected!!, have same selectedUser', selectedUser);
-      console.log('selected!!, have same user', user);
-      
-    }
-  }, [selected, selectedUser, user])
+    console.log("##############user", user)
+  }, [user])
+
+  useEffect(() => {
+    console.log('###################---selecteduser', selectedUser);
+  }, [selectedUser])
 
 
   return (
