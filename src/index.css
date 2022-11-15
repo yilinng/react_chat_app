@@ -45,7 +45,7 @@
 
 .chat__main {
   height: 100%;
-  flex: 0.8;
+  flex: 0.7;
 }
 .chat__header {
   margin: 30px 0 20px 0;
@@ -167,7 +167,7 @@
 
 
 .chat .chatList {
-  flex: 0.2;
+  flex: 0.3;
   padding: 20px;
   border-right: 1px solid #fdfdfd;
   width: 100%;
@@ -224,6 +224,7 @@
   display: flex;
   width: 100%;
   margin: 10px auto;
+  height: 80px;
 }
 
 .chatList .selected{
@@ -268,6 +269,21 @@
   font-weight: bold;
 }
 
+.chatList .user .content .mainMessage {
+  width: auto;
+  margin: auto;
+}
+
+.chat .noPickUser {
+  text-align: center;
+  font-size: 50px;
+  color: rgb(0, 255, 128);
+  font-weight: bolder;
+  width: auto;
+  margin: auto;
+  flex: 0.7;
+}
+
 
 @media screen and (max-width: 600px) {
   .chat {
@@ -292,5 +308,37 @@
 
   .chatList .user {
     width: 100%;
+  }
+}
+
+
+@media screen and (max-width: 1024px) {
+  
+  .chat__main {
+    flex: 0.6;
+  }
+
+  .chat .chatList {
+    flex: 0.4;
+  }
+  
+  .chat .noPickUser {
+  flex: 0.6;
+  }
+
+}
+
+@media screen and (max-width: 767px) {
+  
+  .chat__main {
+    flex: 1;
+  }
+
+  .chat .chatList {
+    flex: 1;
+  }
+  
+  .chat .noPickUser {
+  flex: 0.6;
   }
 }

@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from "react";
 
-const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser}) => {
+const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser, syncUser }) => {
 
   const [message, setMessage] = useState(null)
   const [selected, setSelected] = useState(false)
   const [time, setTime] = useState(null)
 
   const handleClick = () => {
-    const newUsers = [...users];
-    setSelectedUser({ ...user, hasNewMessages: false });
-    const foundUser = newUsers[index];
-    foundUser.hasNewMessages = false;
-    newUsers[index] = foundUser;
-    setUsers([...newUsers]);
-    
+    //user is not same as selectedUser
+    if (!selected) {
+      const newUsers = [...users];
+      setSelectedUser({ ...user, hasNewMessages: false });
+      const foundUser = newUsers[index];
+      foundUser.hasNewMessages = false;
+      newUsers[index] = foundUser;
+      setUsers([...newUsers]);
+    }
+   
     //list user who have same userId have to update!! 
-    const userList = [...users];
-    const findIndexFromUserList = userList.findIndex(element => element.userID === selectedUser?.userID);
-    userList[findIndexFromUserList] = selectedUser;
-    setUsers([...userList]);
+    syncUser()
   }
 
 
   const messageSlice = (msg) => {
-    return msg?.length > 30 ? msg.substring(0, 30) + '...': msg
+    return msg?.length > 20 ? msg.substring(0, 20) + '...': msg
   }
 
   useEffect(() => {
@@ -39,6 +39,7 @@ const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser}) =>
   }, [user, selectedUser, setSelected])
 
 
+
   useEffect(() => {
     console.log("##############user", user)
   }, [user])
@@ -46,6 +47,7 @@ const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser}) =>
   useEffect(() => {
     console.log('###################---selecteduser', selectedUser);
   }, [selectedUser])
+
 
 
   return (
@@ -75,7 +77,7 @@ const User = ({ user, users, setSelectedUser, setUsers, index, selectedUser}) =>
 
         </div>
 
-        <span>{ messageSlice(message) }</span>
+        <span className="mainMessage">{ messageSlice(message) }</span>
 
       </div>
         
